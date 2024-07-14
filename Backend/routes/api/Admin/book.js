@@ -13,9 +13,9 @@ const router = express.Router();
 
 router.post('/getbookdetailsfromapi', protect, librarian, fetchBookDetailsByGoogleAPI)
 router.post("/addbook", protect, librarian, addBook);
-router.put("/:id", protect, librarian, updateBook);
-router.delete("/:id", protect, librarian, deleteBook);
-router.get("/:id", protect, getBook);
+router.put("/updatebook/:id", protect, librarian, updateBook);
+router.delete("/deletebook/:id", protect, librarian, deleteBook);
+router.get("/getbook/:id", protect, getBook);
 router.get("/", protect, searchBooks);
 
 module.exports = router;
