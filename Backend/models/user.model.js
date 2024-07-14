@@ -7,18 +7,12 @@ const Schema = mongoose.Schema;
 const UserSchema = new Schema(
   {
     fullName: { type: String },
-    subUsersId: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "user",
-      },
-    ],
     email: { type: String },
     mobileNumber: { type: String },
     password: { type: String, select: false },
-    otp: { type: String, select: false },
-    otpExpiredAt: { type: Date, select: false },
-    otpRef: { type: String, select: false },
+    // otp: { type: String, select: false },
+    // otpExpiredAt: { type: Date, select: false },
+    // otpRef: { type: String, select: false },
     // qr: { type: String, select: false },
     // qrCreatedOn: { type: String },
     role: {
@@ -38,12 +32,6 @@ const UserSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    projectId: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "project",
-      },
-    ],
   },
   {
     timestamps: true,
