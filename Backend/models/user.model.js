@@ -32,6 +32,12 @@ const UserSchema = new Schema(
       type: Boolean,
       default: false,
     },
+  //   borrowHistory: [
+  //   {
+  //     type: mongoose.Schema.Types.ObjectId,
+  //     ref: 'BorrowHistory',
+  //   },
+  // ],
   },
   {
     timestamps: true,

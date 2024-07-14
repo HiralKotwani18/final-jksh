@@ -31,7 +31,7 @@ exports.signup = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    res.clearCookie("token", { domain: `.${environment.domain}` });
+    res.clearCookie("token", { domain: `.${environment.domain}`, path: "/" });
     const { email, password } = req.body;
 
     const user = await UserModel.findOne({ email, isParent: true }).select(
@@ -54,7 +54,7 @@ exports.login = async (req, res) => {
         );
 
         const { password: hash, ...data } = user.toJSON();
-        res.cookie("token", token, { domain: `.${environment.domain}` });
+        res.cookie("token", token);
         return sendSuccessResponse(res, {
           message: "Success! You are logged in.",
           token,
@@ -63,6 +63,21 @@ exports.login = async (req, res) => {
       }
       return sendErrorResponse(res, "Invalid email or password.", 401);
     });
+  } catch (error) {
+    sendErrorResponse(res, error.message);
+  }
+};
+
+exports.logout = async (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "development",
+      domain: environment.domain,
+      path: '/',
+    });
+    res.clearCookie("token", { domain: `.${environment.domain}` });
+    sendSuccessResponse(res, "User Logged out successfully!");
   } catch (error) {
     sendErrorResponse(res, error.message);
   }
