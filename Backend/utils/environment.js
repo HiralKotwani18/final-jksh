@@ -10,5 +10,6 @@ module.exports = {
     jwt: {
         secret: process.env.JWT_SECRET,
         expiredIn: process.env.JWT_EXPIRED_IN,
-    },      
+    },
+    googleApi: process.env.GOOGLE_API    
 }
