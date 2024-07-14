@@ -76,7 +76,7 @@ exports.logout = async (req, res) => {
       domain: environment.domain,
       path: '/',
     });
-    res.clearCookie("token", { domain: `.${environment.domain}` });
+
     sendSuccessResponse(res, "User Logged out successfully!");
   } catch (error) {
     sendErrorResponse(res, error.message);
