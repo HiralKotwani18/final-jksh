@@ -5,10 +5,11 @@ const {
   sendSuccessResponse,
   sendErrorResponse,
 } = require("../../utils/response");
+const historyModel = require("../../models/history.model");
 
 exports.addBook = async (req, res) => {
   const { isbn } = req.body;
-
+  
   try {
     const existingBook = await Book.findOne({ isbn });
     if (existingBook) {
@@ -32,7 +33,26 @@ exports.addBook = async (req, res) => {
     });
 
     await book.save();
-    sendSuccessResponse(res, { data: book }, 201);
+    const history = await historyModel.findOneAndUpdate(
+      {
+        librarianId: req.user._id,
+        bookId: book._id
+      },
+      {
+        $push: {
+          activityType: {
+            activityName: `Book Added by librarian ${req.user.fullName}`,
+            activityTime: new Date(),
+            doneBy: req.user._id,
+          },
+        },
+      },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
+    sendSuccessResponse(res, { data: {book: book, history: history} }, 201);
   } catch (error) {
     sendErrorResponse(res, error.message);
   }
@@ -110,12 +130,12 @@ exports.searchBooks = async (req, res) => {
       ],
     });
 
-    if (books.length==0) {
-      console.log('hii')
+    if (books.length == 0) {
+      console.log("hii");
       const response = await axios.get(
         `https://www.googleapis.com/books/v1/volumes?q=${search}&key=AIzaSyB63A2FH8rbqFATVz8tfoqSGNxzRlmFV9k`
       );
-      console.log(response)
+      console.log(response);
 
       const getBookFromGoogleApis = [];
       if (
@@ -158,7 +178,7 @@ exports.searchBooks = async (req, res) => {
       } else {
         throw new Error("Book not found");
       }
-    }else{
+    } else {
       sendSuccessResponse(res, { data: books });
     }
   } catch (error) {
