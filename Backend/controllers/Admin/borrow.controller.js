@@ -3,6 +3,7 @@ const Book = require("../../models/book.model");
 const User = require("../../models/user.model");
 const mongoose = require("mongoose");
 const sendEmail = require("../../utils/email");
+const paypalClient = require("../../config/paypalConfig");
 
 exports.borrowBook = async (req, res) => {
   const { bookId, dueDate } = req.body;
@@ -62,7 +63,7 @@ exports.returnBook = async (req, res) => {
 
     if (returned > dueDate) {
       const lateDays = Math.ceil((returned - dueDate) / (1000 * 60 * 60 * 24));
-      borrow.lateFee = lateDays * 1;
+      borrow.lateFee = lateDays * 10; // Example: ₹10 per day
     }
 
     borrow.book.quantity += 1;
@@ -73,12 +74,40 @@ exports.returnBook = async (req, res) => {
     await borrow.book.save();
     await borrow.save();
 
+    // Send notification email
     const user = await User.findById(borrow.user);
-    sendEmail(
-      user.email,
-      "Book Returned",
-      `You have returned ${borrow.book.title}. Thank you!`
-    );
+
+    if (borrow.lateFee > 0) {
+      const request = new paypal.orders.OrdersCreateRequest();
+      request.prefer("return=representation");
+      request.requestBody({
+        intent: "CAPTURE",
+        purchase_units: [
+          {
+            amount: {
+              currency_code: "INR",
+              value: borrow.lateFee.toFixed(2),
+            },
+            description: `Late fee for borrow ID: ${borrow._id}`,
+          },
+        ],
+      });
+
+      const order = await paypalClient.client.execute(request);
+      const paymentLink = `https://www.sandbox.paypal.com/checkoutnow?token=${order.result.id}`;
+
+      sendEmail(
+        user.email,
+        "Late Fee Payment",
+        `You have returned ${borrow.book.title} late. Please pay the late fee of $${borrow.lateFee} using the following link: ${paymentLink}`
+      );
+    } else {
+      sendEmail(
+        user.email,
+        "Book Returned",
+        `You have returned ${borrow.book.title}. Thank you!`
+      );
+    }
 
     res.json(borrow);
   } catch (error) {
@@ -101,6 +130,46 @@ exports.getAllBorrowRecords = async (req, res) => {
   try {
     const borrowRecords = await Borrow.find().populate("book user");
     res.json(borrowRecords);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.createPayment = async (req, res) => {
+  const { borrowId, lateFee } = req.body;
+
+  const request = new paypal.orders.OrdersCreateRequest();
+  request.prefer("return=representation");
+  request.requestBody({
+    intent: "CAPTURE",
+    purchase_units: [
+      {
+        amount: {
+          currency_code: "INR",
+          value: lateFee.toFixed(2),
+        },
+        description: `Late fee for borrow ID: ${borrowId}`,
+      },
+    ],
+  });
+
+  try {
+    const order = await paypalClient.client.execute(request);
+    res.json({ id: order.result.id });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.capturePayment = async (req, res) => {
+  const { orderId } = req.body;
+
+  const request = new paypal.orders.OrdersCaptureRequest(orderId);
+  request.requestBody({});
+
+  try {
+    const capture = await paypalClient.client.execute(request);
+    res.json(capture.result);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
