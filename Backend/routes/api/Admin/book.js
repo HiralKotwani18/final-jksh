@@ -5,11 +5,12 @@ const {
   deleteBook,
   getBook,
   searchBooks,
-} = require("./../../controllers/book.controller");
-const { protect, librarian } = require("../middleware/authMiddleware");
+} = require("../../../controllers/Admin/book.controller");
+
+const { protect, librarian } = require("../../../middleware/authMiddleware");
 const router = express.Router();
 
-router.post("/", protect, librarian, addBook);
+router.post("/addbook", protect, librarian, addBook);
 router.put("/:id", protect, librarian, updateBook);
 router.delete("/:id", protect, librarian, deleteBook);
 router.get("/:id", protect, getBook);
