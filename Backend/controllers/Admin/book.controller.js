@@ -1,6 +1,10 @@
 const Book = require("../../models/book.model");
 const axios = require("axios");
 const environment = require("../../utils/environment");
+const {
+  sendSuccessResponse,
+  sendErrorResponse,
+} = require("../../utils/response");
 
 exports.addBook = async (req, res) => {
   const { isbn } = req.body;
@@ -8,7 +12,7 @@ exports.addBook = async (req, res) => {
   try {
     const existingBook = await Book.findOne({ isbn });
     if (existingBook) {
-      return res.status(400).json({ message: "Book already exists" });
+      return sendErrorResponse(res, { message: "Book already exists" }, 400);
     }
 
     const response = await axios.get(
@@ -27,7 +31,7 @@ exports.addBook = async (req, res) => {
     });
 
     await book.save();
-    res.status(201).json(book);
+    sendSuccessResponse(res, { data: book }, 201);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -99,5 +103,56 @@ exports.searchBooks = async (req, res) => {
     res.json(books);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+exports.fetchBookDetailsByGoogleAPI = async (req, res) => {
+  try {
+    const bookName = req.body.bookName;
+    const response = await axios.get(
+      `https://www.googleapis.com/books/v1/volumes?q=${bookName}&key=AIzaSyB63A2FH8rbqFATVz8tfoqSGNxzRlmFV9k`
+    );
+
+    const allBooks = [];
+    if (
+      response.data &&
+      response.data.items &&
+      response.data.items.length > 0
+    ) {
+      for (let i = 0; i < response.data.items.length; i++) {
+        const bookData = await response.data.items[i].volumeInfo;
+        const isbnNumber =await bookData.industryIdentifiers.map((i)=>{
+          if(i.type === "ISBN_13")
+          {
+            return i.identifier
+          }
+        }).filter((i)=>{
+          return i!=null;
+        });
+                
+        allBooks.push({
+          ISBN: isbnNumber[0],
+          title: bookData.title,
+          author: bookData.authors ? bookData.authors.join(", ") : "Unknown",
+          publisher: bookData.publisher || "Unknown",
+          year: bookData.publishedDate
+            ? new Date(bookData.publishedDate).getFullYear()
+            : "Unknown",
+          genre: bookData.categories
+            ? bookData.categories.join(", ")
+            : "Unknown",
+          description: bookData.description,
+          language: bookData.language,
+          infoLink: bookData.infoLink,
+          previewLink: bookData.previewLink
+        });
+      }
+      // sendSuccessResponse(res, { data: response.data.items });
+      sendSuccessResponse(res, { data: allBooks });
+    } else {
+      throw new Error("Book not found on Google Books API");
+    }
+  } catch (error) {
+    sendErrorResponse(res, error.message);
   }
 };
