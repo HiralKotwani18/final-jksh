@@ -90,24 +90,24 @@ exports.getBook = async (req, res) => {
     if (!book) {
       return res.status(404).json({ message: "Book not found" });
     }
-    sendSuccessResponse(res, { data: book});
+    sendSuccessResponse(res, { data: book });
   } catch (error) {
     sendErrorResponse(res, error.message);
   }
 };
 
 exports.searchBooks = async (req, res) => {
-  const { query } = req.query;
+  const { search } = req.query;
 
   try {
     const books = await Book.find({
       $or: [
-        { title: { $regex: query, $options: "i" } },
-        { author: { $regex: query, $options: "i" } },
-        { genre: { $regex: query, $options: "i" } },
+        { title: new RegExp(search, "i") },
+        { author: new RegExp(search, "i") },
+        { genre: new RegExp(search, "i") },
       ],
     });
-    res.json(books);
+    sendSuccessResponse(res, { data: books });
   } catch (error) {
     sendErrorResponse(res, error.message);
   }
