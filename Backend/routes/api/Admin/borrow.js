@@ -5,7 +5,7 @@ const {
   getUserBorrowHistory,
   getAllBorrowRecords,
 } = require("../../../controllers/Admin/borrow.controller");
-const { protect, librarian } = require("../../../middleware/authMiddleware");
+const { protect, librarian } = require("../../../middleware/authentication");
 const router = express.Router();
 
 router.post("/", protect, borrowBook);
