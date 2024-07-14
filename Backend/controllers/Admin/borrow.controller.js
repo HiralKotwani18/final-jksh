@@ -4,6 +4,7 @@ const User = require("../../models/user.model");
 const mongoose = require("mongoose");
 const sendEmail = require("../../utils/email");
 const paypalClient = require("../../config/paypalConfig");
+const paypal = require("@paypal/checkout-server-sdk");
 
 exports.borrowBook = async (req, res) => {
   const { bookId, dueDate } = req.body;
