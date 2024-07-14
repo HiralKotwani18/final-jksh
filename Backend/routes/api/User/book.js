@@ -8,9 +8,9 @@ const {
 const { protect, librarian } = require("../../../middleware/authentication");
 const router = express.Router();
 
-router.post("/", protect, borrowBook);
-router.put("/:id/return", protect, returnBook);
-router.get("/history", protect, getUserBorrowHistory);
-router.get("/", protect, librarian, getAllBorrowRecords);
+router.post("/borrowbook", protect, borrowBook);
+router.put("/:id/returnbook", protect, returnBook);
+router.get("/history", protect, librarian, getUserBorrowHistory);
+router.get("/allborrowrecords", protect, librarian, getAllBorrowRecords);
 
 module.exports = router;

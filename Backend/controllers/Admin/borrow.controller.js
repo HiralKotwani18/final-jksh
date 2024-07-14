@@ -25,15 +25,18 @@ exports.borrowBook = async (req, res) => {
     });
 
     book.quantity -= 1;
+    book.issuedBy.push({
+      userId: userId,
+    });
     await book.save();
     await borrow.save();
 
     const user = await User.findById(userId);
-    sendEmail(
-      user.email,
-      "Book Borrowed",
-      `You have borrowed ${book.title}. Please return it by ${dueDate}.`
-    );
+    // sendEmail(
+    //   user.email,
+    //   "Book Borrowed",
+    //   `You have borrowed ${book.title}. Please return it by ${dueDate}.`
+    // );
 
     res.status(201).json(borrow);
   } catch (error) {
@@ -42,10 +45,12 @@ exports.borrowBook = async (req, res) => {
 };
 
 exports.returnBook = async (req, res) => {
-  const { id } = req.params;
-  const { returnedDate } = req.body;
-
   try {
+    const { id } = req.params;
+    const userId = req.user._id;
+    // const { returnedDate } = req.body;
+    const returnedDate = Date.now();
+
     const borrow = await Borrow.findById(id).populate("book");
     if (!borrow) {
       return res.status(404).json({ message: "Borrow record not found" });
@@ -61,15 +66,19 @@ exports.returnBook = async (req, res) => {
     }
 
     borrow.book.quantity += 1;
+    borrow.book.returnedBy.push({
+      userId: userId,
+      returnDate: Date.now(),
+    });
     await borrow.book.save();
     await borrow.save();
 
     const user = await User.findById(borrow.user);
-    sendEmail(
-      user.email,
-      "Book Returned",
-      `You have returned ${borrow.book.title}. Thank you!`
-    );
+    // sendEmail(
+    //   user.email,
+    //   "Book Returned",
+    //   `You have returned ${borrow.book.title}. Thank you!`
+    // );
 
     res.json(borrow);
   } catch (error) {

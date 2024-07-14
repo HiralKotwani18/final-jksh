@@ -28,6 +28,7 @@ exports.addBook = async (req, res) => {
       year: bookData.publishedDate.split("-")[0],
       genre: bookData.categories[0],
       quantity: req.body.quantity,
+      libraryQuantity: req.body.quantity,
     });
 
     await book.save();
@@ -97,17 +98,69 @@ exports.getBook = async (req, res) => {
 };
 
 exports.searchBooks = async (req, res) => {
-  const { search } = req.query;
-
   try {
+    const { search } = req.query;
+
     const books = await Book.find({
       $or: [
         { title: new RegExp(search, "i") },
         { author: new RegExp(search, "i") },
         { genre: new RegExp(search, "i") },
+        { publisher: new RegExp(search, "i") },
       ],
     });
-    sendSuccessResponse(res, { data: books });
+
+    if (books.length==0) {
+      console.log('hii')
+      const response = await axios.get(
+        `https://www.googleapis.com/books/v1/volumes?q=${search}&key=AIzaSyB63A2FH8rbqFATVz8tfoqSGNxzRlmFV9k`
+      );
+      console.log(response)
+
+      const getBookFromGoogleApis = [];
+      if (
+        response.data &&
+        response.data.items &&
+        response.data.items.length > 0
+      ) {
+        for (let i = 0; i < response.data.items.length; i++) {
+          const bookData = await response.data.items[i].volumeInfo;
+          const isbnNumber = await bookData.industryIdentifiers
+            .map((i) => {
+              if (i.type === "ISBN_13") {
+                return i.identifier;
+              }
+            })
+            .filter((i) => {
+              return i != null;
+            });
+
+          getBookFromGoogleApis.push({
+            ISBN: isbnNumber[0],
+            title: bookData.title,
+            author: bookData.authors ? bookData.authors.join(", ") : "Unknown",
+            publisher: bookData.publisher || "Unknown",
+            year: bookData.publishedDate
+              ? new Date(bookData.publishedDate).getFullYear()
+              : "Unknown",
+            genre: bookData.categories
+              ? bookData.categories.join(", ")
+              : "Unknown",
+            description: bookData.description,
+            language: bookData.language,
+            infoLink: bookData.infoLink,
+            previewLink: bookData.previewLink,
+            message: "Book is not in the stock",
+          });
+        }
+        // sendSuccessResponse(res, { data: response.data.items });
+        return sendSuccessResponse(res, { data: getBookFromGoogleApis });
+      } else {
+        throw new Error("Book not found");
+      }
+    }else{
+      sendSuccessResponse(res, { data: books });
+    }
   } catch (error) {
     sendErrorResponse(res, error.message);
   }
