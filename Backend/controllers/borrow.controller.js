@@ -1,6 +1,6 @@
 const Borrow = require("../models/borrow");
 const Book = require("../models/book");
-const User = require("../models/user");
+const User = require("../models/user.model");
 const mongoose = require("mongoose");
 
 exports.borrowBook = async (req, res) => {
