@@ -2,6 +2,7 @@ const Borrow = require("../../models/borrow.model");
 const Book = require("../../models/book.model");
 const User = require("../../models/user.model");
 const mongoose = require("mongoose");
+const sendEmail = require("../../utils/email");
 
 exports.borrowBook = async (req, res) => {
   const { bookId, dueDate } = req.body;
@@ -27,6 +28,13 @@ exports.borrowBook = async (req, res) => {
     await book.save();
     await borrow.save();
 
+    const user = await User.findById(userId);
+    sendEmail(
+      user.email,
+      "Book Borrowed",
+      `You have borrowed ${book.title}. Please return it by ${dueDate}.`
+    );
+
     res.status(201).json(borrow);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -49,12 +57,19 @@ exports.returnBook = async (req, res) => {
 
     if (returned > dueDate) {
       const lateDays = Math.ceil((returned - dueDate) / (1000 * 60 * 60 * 24));
-      borrow.lateFee = lateDays * 1; // Example: $1 per day
+      borrow.lateFee = lateDays * 1;
     }
 
     borrow.book.quantity += 1;
     await borrow.book.save();
     await borrow.save();
+
+    const user = await User.findById(borrow.user);
+    sendEmail(
+      user.email,
+      "Book Returned",
+      `You have returned ${borrow.book.title}. Thank you!`
+    );
 
     res.json(borrow);
   } catch (error) {

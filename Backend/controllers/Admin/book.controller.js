@@ -1,5 +1,6 @@
 const Book = require("../../models/book.model");
 const axios = require("axios");
+const environment = require("../../utils/environment");
 
 exports.addBook = async (req, res) => {
   const { isbn } = req.body;
@@ -11,7 +12,7 @@ exports.addBook = async (req, res) => {
     }
 
     const response = await axios.get(
-      `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
+      `${environment.googleApi}/volumes?q=isbn:${isbn}`
     );
     const bookData = response.data.items[0].volumeInfo;
 
