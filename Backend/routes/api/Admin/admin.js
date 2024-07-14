@@ -8,6 +8,5 @@ const bookRoutes = require("./book");
 router.get("/me", adminCtrl.me);
 router.get("/user", adminCtrl.findAll);
 router.use("/book", bookRoutes);
-// router.use("/borrow", borrowRoutes);
 
 module.exports = router;

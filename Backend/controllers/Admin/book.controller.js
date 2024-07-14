@@ -6,10 +6,11 @@ const {
   sendErrorResponse,
 } = require("../../utils/response");
 const historyModel = require("../../models/history.model");
+const UserModel = require("../../models/user.model");
 
 exports.addBook = async (req, res) => {
   const { isbn } = req.body;
-  
+
   try {
     const existingBook = await Book.findOne({ isbn });
     if (existingBook) {
@@ -36,7 +37,7 @@ exports.addBook = async (req, res) => {
     const history = await historyModel.findOneAndUpdate(
       {
         librarianId: req.user._id,
-        bookId: book._id
+        bookId: book._id,
       },
       {
         $push: {
@@ -52,7 +53,7 @@ exports.addBook = async (req, res) => {
         new: true,
       }
     );
-    sendSuccessResponse(res, { data: {book: book, history: history} }, 201);
+    sendSuccessResponse(res, { data: { book: book, history: history } }, 201);
   } catch (error) {
     sendErrorResponse(res, error.message);
   }
@@ -61,42 +62,89 @@ exports.addBook = async (req, res) => {
 exports.updateBook = async (req, res) => {
   try {
     const { id } = req.params;
-    let columns = Object.keys(req.body);
-    let columnNames = columns.map((val) => {
-      return { [val]: req.body[val] };
-    });
-    const mergedObject = columnNames.reduce((result, currentObject) => {
-      return { ...result, ...currentObject };
-    }, {});
+    const { quantity } = req.body;
+    // let columns = Object.keys(req.body);
+    // let columnNames = columns.map((val) => {
+    //   return { [val]: req.body[val] };
+    // });
+    // const mergedObject = columnNames.reduce((result, currentObject) => {
+    //   return { ...result, ...currentObject };
+    // }, {});
 
+    const userDetails = await UserModel.findById(req.user._id)
     const book = await Book.findById(id);
     if (!book) {
       return res.status(404).json({ message: "Book not found" });
     }
-    const updatedBook = await Book.findByIdAndUpdate(
-      id,
+
+    book.quantity = book.quantity + quantity;
+    book.libraryQuantity = book.libraryQuantity + quantity;
+    await book.save()
+    // const updatedBook = await Book.findByIdAndUpdate(
+    //   id,
+    //   {
+    //     ...mergedObject,
+    //   },
+    //   {
+    //     new: true,
+    //   }
+    // );
+
+    const history = await historyModel.findOneAndUpdate(
       {
-        ...mergedObject,
+        librarianId: req.user._id,
+        bookId: id,
       },
       {
+        $push: {
+          activityType: {
+            activityName: `Book Updated by librarian ${userDetails.fullName}`,
+            activityTime: new Date(),
+            doneBy: req.user._id,
+          },
+        },
+      },
+      {
+        upsert: true,
         new: true,
       }
     );
-
-    sendSuccessResponse(res, { data: updatedBook });
-  } catch {
+    sendSuccessResponse(res, {
+      data: { updatedBook: book, history: history },
+    });
+  } catch(error) {
     sendErrorResponse(res, error.message);
   }
 };
 
 exports.deleteBook = async (req, res) => {
-  const { id } = req.params;
-
   try {
+    const { id } = req.params;
     const book = await Book.findByIdAndDelete(id);
     if (!book) {
       return res.status(404).json({ message: "Book not found" });
     }
+    
+    const userDetails = await UserModel.findById(req.user._id)
+    const history = await historyModel.findOneAndUpdate(
+      {
+        librarianId: req.user._id,
+        bookId: id,
+      },
+      {
+        $push: {
+          activityType: {
+            activityName: `Book Deleted by librarian ${userDetails.fullName}`,
+            activityTime: new Date(),
+            doneBy: req.user._id,
+          },
+        },
+      },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
     sendSuccessResponse(res, { message: "Book Removed successfully" });
   } catch (error) {
     sendErrorResponse(res, error.message);
