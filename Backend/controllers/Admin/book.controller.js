@@ -33,31 +33,38 @@ exports.addBook = async (req, res) => {
     await book.save();
     sendSuccessResponse(res, { data: book }, 201);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendErrorResponse(res, error.message);
   }
 };
 
 exports.updateBook = async (req, res) => {
-  const { id } = req.params;
-  const { title, author, publisher, year, genre, quantity } = req.body;
-
   try {
+    const { id } = req.params;
+    let columns = Object.keys(req.body);
+    let columnNames = columns.map((val) => {
+      return { [val]: req.body[val] };
+    });
+    const mergedObject = columnNames.reduce((result, currentObject) => {
+      return { ...result, ...currentObject };
+    }, {});
+
     const book = await Book.findById(id);
     if (!book) {
       return res.status(404).json({ message: "Book not found" });
     }
+    const updatedBook = await Book.findByIdAndUpdate(
+      id,
+      {
+        ...mergedObject,
+      },
+      {
+        new: true,
+      }
+    );
 
-    book.title = title || book.title;
-    book.author = author || book.author;
-    book.publisher = publisher || book.publisher;
-    book.year = year || book.year;
-    book.genre = genre || book.genre;
-    book.quantity = quantity || book.quantity;
-
-    await book.save();
-    res.json(book);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendSuccessResponse(res, { data: updatedBook });
+  } catch {
+    sendErrorResponse(res, error.message);
   }
 };
 
@@ -69,9 +76,9 @@ exports.deleteBook = async (req, res) => {
     if (!book) {
       return res.status(404).json({ message: "Book not found" });
     }
-    res.json({ message: "Book removed" });
+    sendSuccessResponse(res, { message: "Book Removed successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendErrorResponse(res, error.message);
   }
 };
 
@@ -83,9 +90,9 @@ exports.getBook = async (req, res) => {
     if (!book) {
       return res.status(404).json({ message: "Book not found" });
     }
-    res.json(book);
+    sendSuccessResponse(res, { data: book});
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendErrorResponse(res, error.message);
   }
 };
 
@@ -102,7 +109,7 @@ exports.searchBooks = async (req, res) => {
     });
     res.json(books);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendErrorResponse(res, error.message);
   }
 };
 
@@ -121,15 +128,16 @@ exports.fetchBookDetailsByGoogleAPI = async (req, res) => {
     ) {
       for (let i = 0; i < response.data.items.length; i++) {
         const bookData = await response.data.items[i].volumeInfo;
-        const isbnNumber =await bookData.industryIdentifiers.map((i)=>{
-          if(i.type === "ISBN_13")
-          {
-            return i.identifier
-          }
-        }).filter((i)=>{
-          return i!=null;
-        });
-                
+        const isbnNumber = await bookData.industryIdentifiers
+          .map((i) => {
+            if (i.type === "ISBN_13") {
+              return i.identifier;
+            }
+          })
+          .filter((i) => {
+            return i != null;
+          });
+
         allBooks.push({
           ISBN: isbnNumber[0],
           title: bookData.title,
@@ -144,7 +152,7 @@ exports.fetchBookDetailsByGoogleAPI = async (req, res) => {
           description: bookData.description,
           language: bookData.language,
           infoLink: bookData.infoLink,
-          previewLink: bookData.previewLink
+          previewLink: bookData.previewLink,
         });
       }
       // sendSuccessResponse(res, { data: response.data.items });
