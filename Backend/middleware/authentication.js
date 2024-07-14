@@ -33,6 +33,7 @@ module.exports.admin = (req, res, next) => {
 };
 
 module.exports.librarian = (req, res, next) => {
+  console.log(req.user)
   if (
     req.user &&
     (req.user.role === "Admin" || req.user.role === "Librarian")

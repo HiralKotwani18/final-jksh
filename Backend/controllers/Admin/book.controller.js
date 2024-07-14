@@ -34,6 +34,7 @@ exports.addBook = async (req, res) => {
     });
 
     await book.save();
+    const userDetails = await UserModel.findById(req.user._id)
     const history = await historyModel.findOneAndUpdate(
       {
         librarianId: req.user._id,
@@ -42,7 +43,7 @@ exports.addBook = async (req, res) => {
       {
         $push: {
           activityType: {
-            activityName: `Book Added by librarian ${req.user.fullName}`,
+            activityName: `Book Added by librarian ${userDetails.fullName}`,
             activityTime: new Date(),
             doneBy: req.user._id,
           },
@@ -124,7 +125,7 @@ exports.deleteBook = async (req, res) => {
     if (!book) {
       return res.status(404).json({ message: "Book not found" });
     }
-    
+
     const userDetails = await UserModel.findById(req.user._id)
     const history = await historyModel.findOneAndUpdate(
       {

@@ -32,11 +32,11 @@ exports.borrowBook = async (req, res) => {
     await borrow.save();
 
     const user = await User.findById(userId);
-    // sendEmail(
-    //   user.email,
-    //   "Book Borrowed",
-    //   `You have borrowed ${book.title}. Please return it by ${dueDate}.`
-    // );
+    sendEmail(
+      user.email,
+      "Book Borrowed",
+      `You have borrowed ${book.title}. Please return it by ${dueDate}.`
+    );
 
     res.status(201).json(borrow);
   } catch (error) {
@@ -74,11 +74,11 @@ exports.returnBook = async (req, res) => {
     await borrow.save();
 
     const user = await User.findById(borrow.user);
-    // sendEmail(
-    //   user.email,
-    //   "Book Returned",
-    //   `You have returned ${borrow.book.title}. Thank you!`
-    // );
+    sendEmail(
+      user.email,
+      "Book Returned",
+      `You have returned ${borrow.book.title}. Thank you!`
+    );
 
     res.json(borrow);
   } catch (error) {

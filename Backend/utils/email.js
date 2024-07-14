@@ -1,3 +1,31 @@
+// const nodemailer = require("nodemailer");
+// const environment = require("./environment");
+
+// const sendEmail = async (to, subject, text) => {
+//   const transporter = nodemailer.createTransport({
+//     host: "smtp.gmail.com",
+//     port: 587,
+//     secure: false,
+//     requireTLS: true,
+//     service: "gmail",
+//     auth: {
+//       user: environment.user,
+//       pass: environment.pass,
+//     },
+//   });
+
+//   const mailOptions = {
+//     from: process.env.EMAIL_USERNAME,
+//     to,
+//     subject,
+//     text,
+//   };
+
+//   await transporter.sendMail(mailOptions);
+// };
+
+// module.exports = sendEmail;
+
 const nodemailer = require("nodemailer");
 const environment = require("./environment");
 
@@ -9,13 +37,13 @@ const sendEmail = async (to, subject, text) => {
     requireTLS: true,
     service: "gmail",
     auth: {
-      user: environment.user,
-      pass: environment.pass,
+      user: 'jconeseven@gmail.com',
+      pass: 'vzzkwyybxaavlyuc',
     },
   });
 
   const mailOptions = {
-    from: process.env.EMAIL_USERNAME,
+    from: "jconeseven@gmail.com",
     to,
     subject,
     text,
