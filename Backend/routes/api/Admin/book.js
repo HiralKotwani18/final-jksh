@@ -7,7 +7,7 @@ const {
   searchBooks,
 } = require("../../../controllers/Admin/book.controller");
 
-const { protect, librarian } = require("../../../middleware/authMiddleware");
+const { protect, librarian } = require("../../../middleware/authentication");
 const router = express.Router();
 
 router.post("/addbook", protect, librarian, addBook);

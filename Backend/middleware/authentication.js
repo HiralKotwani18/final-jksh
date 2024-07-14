@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const environment = require("../utils/environment");
 const { sendErrorResponse } = require("../utils/response");
 
-const protect = async (req, res, next) => {
+module.exports.protect = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || "";
     const token =
@@ -24,7 +24,7 @@ const protect = async (req, res, next) => {
   }
 };
 
-const admin = (req, res, next) => {
+module.exports.admin = (req, res, next) => {
   if (req.user && req.user.role === "Admin") {
     next();
   } else {
@@ -32,7 +32,7 @@ const admin = (req, res, next) => {
   }
 };
 
-const librarian = (req, res, next) => {
+module.exports.librarian = (req, res, next) => {
   if (
     req.user &&
     (req.user.role === "Admin" || req.user.role === "Librarian")
@@ -43,4 +43,3 @@ const librarian = (req, res, next) => {
   }
 };
 
-module.exports = { protect, admin, librarian };
