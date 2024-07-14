@@ -6,10 +6,11 @@ module.exports = {
       },
     },
     user: {
-      roles: ["Admin", "User"],
+      roles: ["Admin", "User", "Librarian"],
     },
     roles: {
       admin: "Admin",
       user: "User",
+      librarian: "Librarian"
     }  
 }

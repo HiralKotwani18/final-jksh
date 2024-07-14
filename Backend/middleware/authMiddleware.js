@@ -1,27 +1,26 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/user.model");
-const dotenv = require("dotenv");
-
-dotenv.config();
+const environment = require("../utils/environment");
+const { sendErrorResponse } = require("../utils/response");
 
 const protect = async (req, res, next) => {
-  let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    try {
-      token = req.headers.authorization.split(" ")[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select("-password");
-      next();
-    } catch (error) {
-      res.status(401).json({ message: "Not authorized, token failed" });
+  try {
+    const authHeader = req.headers.authorization || "";
+    const token =
+      (authHeader && authHeader.split(" ")[1]) || req.cookies["token"] || "";
+    if (!token) {
+      sendErrorResponse(res, "Unauthorized Access", 401);
+    } else {
+      let decoded = jwt.decode(token);
+      jwt.verify(token, environment.jwt.secret, async (err, user) => {
+        if (err) {
+          return sendErrorResponse(res, "Invalid Token or Expired", 401);
+        }
+        req.user = decoded;
+        next();
+      });
     }
-  }
-
-  if (!token) {
-    res.status(401).json({ message: "Not authorized, no token" });
+  } catch (error) {
+    sendErrorResponse(res, "Unauthorized Access", 401);
   }
 };
 
