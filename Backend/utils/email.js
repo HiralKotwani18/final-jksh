@@ -9,13 +9,13 @@ const sendEmail = async (to, subject, text) => {
     requireTLS: true,
     service: "gmail",
     auth: {
-      user: environment.user,
-      pass: environment.pass,
+      user: environment.gmail.user,
+      pass: environment.gmail.pass,
     },
   });
 
   const mailOptions = {
-    from: process.env.EMAIL_USERNAME,
+    from: environment.gmail.user,
     to,
     subject,
     text,
